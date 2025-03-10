@@ -18,19 +18,20 @@ public enum GameState {
     Gameplay,
 }
 
-public class LevelManager : MonoBehaviour {
+public class LevelManager : MonoBehaviour, IDataPersistance {
     public GameState CurrentGameState;
 
     public static LevelManager instance;
-    // public Player PlayerInstance;
     public static Player PlayerInstance;
     public GameObject PlayerPrefab;
     public GameObject SpawnSystemPrefab;
     SpawnSystem SpawnSystem;
 
     public int playerDeathsCount = 0;
-    public int totalEnemiesKilledCount = 0;
-    public IntSO currentSessionEnemyKillCount;
+    public int killRecord = 0;
+    public IntSO DeathsCountSO;
+    public IntSO CurrentSessionEnemyKillCount;
+    public IntSO KillRecordSO;
 
     public float levelFinishDelaySeconds;
     private WaitForSeconds levelFinishDelay;
@@ -313,7 +314,7 @@ public class LevelManager : MonoBehaviour {
 
         SpawnSystem = Instantiate(SpawnSystemPrefab, transform.position, Quaternion.identity, transform).GetComponentInHierarchy<SpawnSystem>();
         AudioManager.instance.PlayMusic("GameplayMusic");
-        currentSessionEnemyKillCount.Value = 0;
+        CurrentSessionEnemyKillCount.Value = 0;
         playerSpawnTimer.Start();
 
         yield return null;
@@ -373,7 +374,7 @@ public class LevelManager : MonoBehaviour {
     }
 
     void ScoreEnemySkill() {
-        currentSessionEnemyKillCount.Value++;
+        CurrentSessionEnemyKillCount.Value++;
     }
 
     private IEnumerator ScreenFade(CanvasGroup canvasGroup, float targetAlpha, float duration = 1f) {
@@ -393,8 +394,31 @@ public class LevelManager : MonoBehaviour {
     }
 
     public IEnumerator GameOverRoutine() {
-        yield return levelFinishDelay;
         OnGameOver?.Invoke();
+        yield return levelFinishDelay;
+        
+        playerDeathsCount++;
+
+        if (CurrentSessionEnemyKillCount.Value > killRecord) {
+            killRecord = CurrentSessionEnemyKillCount.Value;
+        }
+        DeathsCountSO.Value = playerDeathsCount;
+        KillRecordSO.Value = killRecord;
+        DataPersistanceManager.instance.SaveGame();
         yield return null;
+    }
+
+    public void LoadData(GameData data) {
+        playerDeathsCount = data.deathCount;
+        killRecord = data.killRecord;
+        DeathsCountSO.Value = playerDeathsCount;
+        KillRecordSO.Value = killRecord;
+    }
+
+    public void SaveData(ref GameData data) {
+        data.deathCount = playerDeathsCount;
+        data.killRecord = killRecord;
+        DeathsCountSO.Value = playerDeathsCount;
+        KillRecordSO.Value = killRecord;
     }
 }

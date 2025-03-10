@@ -19,12 +19,17 @@ public class SpawnSystem : MonoBehaviour {
     CountdownTimer enemySpawnTimer;
     CountdownTimer enemySpawnTimerDelay;
 
+    bool lockSpawning = false;
+
     void OnEnable() {
         enemySpawnTimerDelay.OnTimerStop += enemySpawnTimer.Start;
         enemySpawnTimerDelay.OnTimerStop += SpawnRandomEnemy;
         enemySpawnTimer.OnTimerStop += SpawnRandomEnemy;
 
         Enemy.OnEnemyDestroyed += () => currentAmountOfEnemies--;
+
+        LevelManager.OnGameOver += enemySpawnTimer.Stop;
+        LevelManager.OnGameOver += () => lockSpawning = true;
     }
 
     void OnDisable() {
@@ -33,6 +38,9 @@ public class SpawnSystem : MonoBehaviour {
         enemySpawnTimer.OnTimerStop -= SpawnRandomEnemy;
 
         Enemy.OnEnemyDestroyed -= () => currentAmountOfEnemies--;
+
+        LevelManager.OnGameOver -= enemySpawnTimer.Stop;
+        LevelManager.OnGameOver -= () => lockSpawning = true;
     }
 
     void Awake() {
@@ -41,12 +49,13 @@ public class SpawnSystem : MonoBehaviour {
     }
 
     void Update() {
-        enemySpawnTimerDelay.Tick(Time.deltaTime);
-        enemySpawnTimer.Tick(Time.deltaTime);
+        if (!lockSpawning) enemySpawnTimerDelay.Tick(Time.deltaTime);
+        if (!lockSpawning)enemySpawnTimer.Tick(Time.deltaTime);
     }
 
     void Start() {
         currentAmountOfEnemies = 0;
+        lockSpawning = false;
         enemySpawnTimerDelay.Start();
     }
 

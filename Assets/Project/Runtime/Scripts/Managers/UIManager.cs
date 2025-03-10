@@ -14,6 +14,8 @@ public class UIManager : MonoBehaviour {
     public IntSO PlayerHealth;
     public IntSO PlayerMaxHealth;
     public IntSO EnemiesKilled;
+    public IntSO EnemiesKilledRecord;
+    public IntSO DeathsCount;
     public float panelFadeSpeed = 1f;
 
     [Space(20)]
@@ -21,8 +23,8 @@ public class UIManager : MonoBehaviour {
     [Header("Background References")]
     [Space(5)]
     public Image backgroundImage;
-    public Texture2D vortexTexture;
-    public Texture2D nebulaBackground2Texture;
+    public Sprite vortexTexture;
+    public Sprite nebulaTexture;
 
     [Space(20)]
 
@@ -44,6 +46,10 @@ public class UIManager : MonoBehaviour {
     [Space(5)]
     public TMP_Text PlayerHPText;
     public TMP_Text EnemyKillCountText;
+    public TMP_Text EnemyKillTotalText;
+    public TMP_Text EnemyKillRecordText;
+    public TMP_Text EnemyKillRecordMainMenuText;
+    public TMP_Text PlayerDeathsCountText;
     public TMP_Text MusicVolumeText;
     public TMP_Text SFXVolumeText;
 
@@ -52,10 +58,12 @@ public class UIManager : MonoBehaviour {
     private Coroutine gamePausedCoroutine;
 
     private void OnEnable() {
-
         PlayerHealth.OnValueChange += UpdatePlayerHealth;
 
         EnemiesKilled.OnValueChange += UpdateKillCounter;
+        EnemiesKilled.OnValueChange += UpdateKillTotal;
+        EnemiesKilledRecord.OnValueChange += UpdateKillRecord;
+        DeathsCount.OnValueChange += UpdateDeathsCount;
 
         LevelManager.OnGameOver += ShowGameOverUI;
         LevelManager.OnMainMenuLoadEnd += InitializeMainMenuUI;
@@ -65,10 +73,12 @@ public class UIManager : MonoBehaviour {
     }
 
     private void OnDisable() {
-
         PlayerHealth.OnValueChange -= UpdatePlayerHealth;
 
         EnemiesKilled.OnValueChange -= UpdateKillCounter;
+        EnemiesKilled.OnValueChange -= UpdateKillTotal;
+        EnemiesKilledRecord.OnValueChange -= UpdateKillRecord;
+        DeathsCount.OnValueChange -= UpdateDeathsCount;
 
         LevelManager.OnGameOver -= ShowGameOverUI;
         LevelManager.OnMainMenuLoadEnd -= InitializeMainMenuUI;
@@ -105,6 +115,8 @@ public class UIManager : MonoBehaviour {
     }
 
     private void InitializeMainMenuUI() {
+        backgroundImage.sprite = nebulaTexture;
+
         SetPanelMenuUI(MainMenuGroup, true);
         SetPanelMenuUI(InGameGroup, false);
 
@@ -116,6 +128,8 @@ public class UIManager : MonoBehaviour {
     }
 
     private void InitializeGameplayUI() {
+        backgroundImage.sprite = vortexTexture;
+
         SetPanelMenuUI(MainMenuGroup, false);
         SetPanelMenuUI(InGameGroup, true);
 
@@ -127,9 +141,13 @@ public class UIManager : MonoBehaviour {
         SetPanelMenuUI(GameOverMenuGroup, false);
     }
 
-    private void SetPanelMenuUI(CanvasGroup group, bool enabled) {
-        group.enabled = enabled;
-        group.blocksRaycasts = enabled;
+    private void SetPanelMenuUI(CanvasGroup group, bool _enabled) {
+        if (_enabled)
+            group.alpha = 1f;
+        else
+            group.alpha = 0f;
+
+        group.blocksRaycasts = _enabled;
     }
 
     public void SetPausedState(bool pause) {
@@ -151,7 +169,7 @@ public class UIManager : MonoBehaviour {
     }
 
     void UpdatePlayerHealth(ValueSO<int> amount) {
-        PlayerHPText.text = $"HP: {PlayerHealth.Value}/{PlayerMaxHealth.Value}";
+        PlayerHPText.text = $"HP: {amount.Value}/{PlayerMaxHealth.Value}";
     }
 
     void UpdateKillCounter() {
@@ -159,7 +177,16 @@ public class UIManager : MonoBehaviour {
     }
 
     void UpdateKillCounter(ValueSO<int> amount) {
-        EnemyKillCountText.text = $"Enemies Killed: {EnemiesKilled.Value}";
+        EnemyKillCountText.text = $"Enemigos matados: {amount.Value}";
+    }
+
+    void UpdateKillTotal(ValueSO<int> amount) {
+        EnemyKillTotalText.text = $"Eliminaciones: {amount.Value}";
+    }
+
+    void UpdateKillRecord(ValueSO<int> amount) {
+        EnemyKillRecordText.text = $"Record: {amount.Value}";
+        EnemyKillRecordMainMenuText.text = $"Record: {amount.Value} enemigos";
     }
 
     public void UpdateMusicVolumeSlider(ValueSO<int> volume) {
@@ -178,6 +205,10 @@ public class UIManager : MonoBehaviour {
     public void UpdateSFXVolumeSlider(int volume) {
         SFXVolumeText.text = $"{volume}";
         SFXVolume.Value = volume;
+    }
+
+    void UpdateDeathsCount(ValueSO<int> amount) {
+        PlayerDeathsCountText.text = $"Muertes totales: {amount.Value}";
     }
 
     private IEnumerator GamePauseRoutine(bool pause) {

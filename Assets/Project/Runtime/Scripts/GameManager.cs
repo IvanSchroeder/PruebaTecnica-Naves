@@ -37,12 +37,4 @@ public class GameManager : MonoBehaviour {
         AudioManager = GetComponentInChildren<AudioManager>();
         OptionsManager = GetComponentInChildren<OptionsManager>();
     }
-
-    private void SaveData() {
-
-    }
-
-    private void LoadData() {
-
-    }
 }

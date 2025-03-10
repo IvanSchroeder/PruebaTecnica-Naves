@@ -35,6 +35,9 @@ public class Enemy : Entity, IDamageable, IDamageDealer {
         shootRateTimer = new CountdownTimer(shootRate);
         shootRateTimer.OnTimerStart += () => canShoot = false;
         shootRateTimer.OnTimerStop += () => canShoot = true;
+
+        LevelManager.OnGameOver += KillShip;
+        LevelManager.OnMainMenuLoadStart += KillShip;
     }
 
     protected override void OnDisable() {
@@ -44,6 +47,9 @@ public class Enemy : Entity, IDamageable, IDamageDealer {
 
         shootRateTimer.OnTimerStart -= () => canShoot = false;
         shootRateTimer.OnTimerStop -= () => canShoot = true;
+
+        LevelManager.OnGameOver -= KillShip;
+        LevelManager.OnMainMenuLoadStart -= KillShip;
     }
 
     protected override void Awake() {
@@ -158,8 +164,12 @@ public class Enemy : Entity, IDamageable, IDamageDealer {
 
     void DestroyShip(object sender, OnEntityDamagedEventArgs entityDamagedEventArgs) {
         OnEnemyDestroyed?.Invoke();
-        // reproduce sound
-        // add points to player
+        Instantiate(ExplosionVFX, transform.position, Quaternion.identity);
+        AudioManager.instance.PlaySFX("EnemyDeath");
+        gameObject.Destroy();
+    }
+
+    void KillShip() {
         Instantiate(ExplosionVFX, transform.position, Quaternion.identity);
         AudioManager.instance.PlaySFX("EnemyDeath");
         gameObject.Destroy();
